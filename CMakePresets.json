@@ -1,0 +1,26 @@
+{
+    "version": 6,
+    "configurePresets": [
+        {
+            "name": "RK3588-base",
+            "hidden": true,
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "generator": "Unix Makefiles",
+            "toolchainFile": "${sourceDir}/RK3588.cmake"
+        },
+        {
+            "name": "RK3588-Debug",
+            "inherits": "RK3588-base",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "RK3588-Release",
+            "inherits": "RK3588-base",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        }
+    ]
+}
