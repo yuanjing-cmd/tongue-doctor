@@ -25,6 +25,7 @@ endif()
 set(TONGUE_DOCTOR_FOLDER
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/logger
+    ${CMAKE_CURRENT_SOURCE_DIR}/view
 )
 
 foreach(folder ${TONGUE_DOCTOR_FOLDER})
@@ -38,6 +39,7 @@ add_executable(${PROJECT_NAME}
 )
 
 target_link_libraries(${PROJECT_NAME}
+    NGUI
     imageutils
     fileutils
     imagedrawing

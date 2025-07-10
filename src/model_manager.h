@@ -4,14 +4,20 @@
 #include "rkllm.h"
 #include "yolov7.h"
 
-#include "postprocess.h"
-
 #include "llm_controller.h"
+#include "yolo_controller.h"
 
 #include <string>
 
 class ModelManager
 {
+public:
+    static ModelManager& Inst()
+    {
+        static ModelManager inst;
+        return inst;
+    };
+
 public:
     ModelManager();
     ~ModelManager();
@@ -19,10 +25,8 @@ public:
     bool LoadYolov7Model(const std::string& model_path);
     bool LoadLLMModel(const std::string& model_path);
 
-    bool InferenceYolov7(image_buffer_t& src_image, object_detect_result_list& od_results);
-    bool GetYoloClassName(int class_id, std::string& class_name);
-
-    LLMController* CreateLLMController();
+    std::unique_ptr<YoloController> CreateYoloController(YoloController::YoloObserver* observer);
+    std::unique_ptr<LLMController> CreateLLMController(LLMController::LLMObserver* observer);
 
 private:
     rknn_app_context_t m_rknn_app_ctx;

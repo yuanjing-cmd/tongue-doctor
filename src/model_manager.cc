@@ -8,9 +8,6 @@
 #include <fstream>
 #include <iostream>
 
-#define PROMPT_TEXT_PREFIX "<｜begin▁of▁sentence｜><｜User｜>"
-#define PROMPT_TEXT_POSTFIX "<｜Assistant｜>"
-
 ModelManager::ModelManager()
 {
 }
@@ -22,7 +19,7 @@ ModelManager::~ModelManager()
     {
         LOG_ERROR("release_yolov7_model fail! ret=%d\n", ret);
     }
-    
+
     rkllm_release_prompt_cache(m_llmHandle);
 
     rkllm_destroy(m_llmHandle);
@@ -38,7 +35,7 @@ bool ModelManager::LoadYolov7Model(const std::string& model_path)
     if (ret != 0)
     {
         deinit_post_process();
-        LOG_ERROR("init_yolov7_model fail! ret=%d model_path=%s\n", ret, model_path);
+        LOG_ERROR("init_yolov7_model fail! ret=%d model_path=%s\n", ret, model_path.c_str());
         return false;
     }
 
@@ -47,14 +44,14 @@ bool ModelManager::LoadYolov7Model(const std::string& model_path)
 
 void callback(RKLLMResult* result, void* userdata, LLMCallState state)
 {
-    LLMController* observer = (LLMController*)userdata;
+    LLMController* controller = (LLMController*)userdata;
     if (state == RKLLM_RUN_FINISH)
     {
-        observer->OnLLMInferenceFinish();
+        controller->OnLLMInferenceFinish();
     }
     else if (state == RKLLM_RUN_ERROR)
     {
-        observer->OnLLMInferenceError();
+        controller->OnLLMInferenceError();
     }
     else if (state == RKLLM_RUN_GET_LAST_HIDDEN_LAYER)
     {
@@ -82,7 +79,7 @@ void callback(RKLLMResult* result, void* userdata, LLMCallState state)
     }
     else if (state == RKLLM_RUN_NORMAL)
     {
-        observer->OnLLMInferenceRunning(result->text);
+        controller->OnLLMInferenceRunning(result->text);
     }
 }
 
@@ -103,6 +100,7 @@ bool ModelManager::LoadLLMModel(const std::string& model_path)
     param.max_new_tokens = 10000;
     param.max_context_len = 10000;
     param.skip_special_token = true;
+    param.is_async = true;
     param.extend_param.base_domain_id = 0;
 
     int ret = rkllm_init(&m_llmHandle, &param, callback);
@@ -114,34 +112,35 @@ bool ModelManager::LoadLLMModel(const std::string& model_path)
 
     LOG_INFO("rkllm init success");
 
+    RKLLMLoraAdapter lora_adapter;
+    memset(&lora_adapter, 0, sizeof(RKLLMLoraAdapter));
+    lora_adapter.lora_adapter_path = "./model/DeepSeek-R1-Distill-Qwen-1.5B_W8A8_RK3588_lora.rkllm";
+    lora_adapter.lora_adapter_name = "test";
+    lora_adapter.scale = 1.0;
+    ret = rkllm_load_lora(m_llmHandle, &lora_adapter);
+    if (ret != 0)
+    {
+        LOG_ERROR("rkllm load lora failed, ret = %d", ret);
+        return false;
+    }
+
+    LOG_INFO("rkllm load lora success");
+
     // rkllm_load_prompt_cache(m_llmHandle, "./prompt_cache.bin"); // 加载缓存的cache
 
     return true;
 }
 
-bool ModelManager::InferenceYolov7(image_buffer_t& src_image, object_detect_result_list& od_results)
+std::unique_ptr<YoloController> ModelManager::CreateYoloController(YoloController::YoloObserver* observer)
 {
-    int ret = inference_yolov7_model(&m_rknn_app_ctx, &src_image, &od_results);
-    if (ret != 0)
-    {
-        LOG_ERROR("inference_yolov7_model fail! ret=%d\n", ret);
-        return false;
-    }
-
-    return true;
+    return std::unique_ptr<YoloController>(new YoloController(&m_rknn_app_ctx, observer));
 }
 
-bool ModelManager::GetYoloClassName(int class_id, std::string& class_name)
-{
-    class_name = coco_cls_to_name(class_id);
-    return true;
-}
-
-LLMController* ModelManager::CreateLLMController()
+std::unique_ptr<LLMController> ModelManager::CreateLLMController(LLMController::LLMObserver* observer)
 {
     RKLLMPromptCacheParam prompt_cache_params;
     prompt_cache_params.save_prompt_cache = true;                 // 是否保存 prompt cache
     prompt_cache_params.prompt_cache_path = "./prompt_cache.bin"; // 若需要保存prompt cache, 指定 cache 文件路径
 
-    return new LLMController(m_llmHandle, prompt_cache_params);
+    return std::unique_ptr<LLMController>(new LLMController(m_llmHandle, prompt_cache_params, observer));
 }

@@ -201,7 +201,7 @@ int inference_yolov7_model(rknn_app_context_t *app_ctx, image_buffer_t *img, obj
         return -1;
     }
     timer.tok();
-    timer.print_time("convert_image_with_letterbox");
+    // timer.print_time("convert_image_with_letterbox");
 
     // Set Input Data
     inputs[0].index = 0;
@@ -218,7 +218,7 @@ int inference_yolov7_model(rknn_app_context_t *app_ctx, image_buffer_t *img, obj
         return -1;
     }
     timer.tok();
-    timer.print_time("rknn_inputs_set");
+    // timer.print_time("rknn_inputs_set");
 
     // Run
     timer.tik();
@@ -229,7 +229,7 @@ int inference_yolov7_model(rknn_app_context_t *app_ctx, image_buffer_t *img, obj
         return -1;
     }
     timer.tok();
-    timer.print_time("rknn_run");
+    // timer.print_time("rknn_run");
 
     // Get Output
     memset(outputs, 0, sizeof(outputs));
@@ -247,13 +247,13 @@ int inference_yolov7_model(rknn_app_context_t *app_ctx, image_buffer_t *img, obj
         goto out;
     }
     timer.tok();
-    timer.print_time("rknn_outputs_get");
+    // timer.print_time("rknn_outputs_get");
 
     // Post Process
     timer.tik();
     post_process(app_ctx, outputs, &letter_box, box_conf_threshold, nms_threshold, od_results);
     timer.tok();
-    timer.print_time("post_process");
+    // timer.print_time("post_process");
 
     // Remeber to release rknn output
     rknn_outputs_release(app_ctx->rknn_ctx, app_ctx->io_num.n_output, outputs);

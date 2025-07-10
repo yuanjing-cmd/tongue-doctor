@@ -24,6 +24,22 @@ set(JPEG_PATH ${CMAKE_CURRENT_SOURCE_DIR}/jpeg_turbo)
 set(LIBJPEG ${JPEG_PATH}/${CMAKE_SYSTEM_NAME}/${TARGET_LIB_ARCH}/libturbojpeg.a PARENT_SCOPE)
 set(LIBJPEG_INCLUDES ${JPEG_PATH}/include PARENT_SCOPE)
 
+# NGUI
+set(NGUI_PATH ${CMAKE_CURRENT_SOURCE_DIR}/ngui)
+list(APPEND NGUI_INCLUDE
+    ${NGUI_PATH}/include
+    ${NGUI_PATH}/include/deps
+    ${NGUI_PATH}/include/indev
+    ${NGUI_PATH}/include/layout
+    ${NGUI_PATH}/include/msg
+    ${NGUI_PATH}/include/painter
+    ${NGUI_PATH}/include/widget
+)
+add_library(NGUI INTERFACE)
+target_include_directories(NGUI INTERFACE ${NGUI_INCLUDE})
+target_link_directories(NGUI INTERFACE ${NGUI_PATH}/lib)
+target_link_libraries(NGUI INTERFACE NeatGUI asound avcodec avformat avutil graphic_lsf rockchip_mpp rockit drm)
+
 # opencv2
 set(OpenCV_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opencv/share/OpenCV)
 find_package(OpenCV REQUIRED core videoio)

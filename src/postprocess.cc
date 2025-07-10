@@ -417,6 +417,7 @@ static int process_fp32(float *input, int *anchor, int grid_h, int grid_w, int h
                     box_y -= (box_h / 2.0);
 
                     float maxClassProbs = in_ptr[5 * grid_len];
+                    maxClassProbs = sigmoid(maxClassProbs);
                     int maxClassId = 0;
                     for (int k = 1; k < OBJ_CLASS_NUM; ++k)
                     {
@@ -430,6 +431,7 @@ static int process_fp32(float *input, int *anchor, int grid_h, int grid_w, int h
                     }
                     if (maxClassProbs > threshold)
                     {
+                        // printf("%d %f %f\n", maxClassId, maxClassProbs, box_confidence);
                         objProbs.push_back(maxClassProbs * box_confidence);
                         classId.push_back(maxClassId);
                         validCount++;
@@ -506,8 +508,6 @@ int post_process(rknn_app_context_t *app_ctx, void *outputs, letterbox_t *letter
         }
 #endif
     }
-
-    printf("validCount = %d\n", validCount);
 
     // no object detect
     if (validCount <= 0)

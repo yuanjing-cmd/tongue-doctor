@@ -1,7 +1,26 @@
 #include "logger_impl.h"
 
+#include <chrono>
 #include <cstdarg>
 #include <cstdio>
+#include <iomanip>
+#include <sstream>
+
+std::string getCurrentTimeWithMs()
+{
+    auto now = std::chrono::system_clock::now();
+    auto now_time = std::chrono::system_clock::to_time_t(now);
+
+    // 获取毫秒部分
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+
+    std::tm* local_time = std::localtime(&now_time);
+
+    std::ostringstream oss;
+    oss << std::put_time(local_time, "%Y-%m-%d %H:%M:%S") << '.' << std::setfill('0') << std::setw(3) << ms.count();
+
+    return oss.str();
+}
 
 bool CLoggerImpl::Init()
 {
@@ -15,9 +34,10 @@ void CLoggerImpl::LogDebug(const char* file, uint32_t line, const char* format, 
         return;
     }
 
-    fprintf(stdout, "[DEBUG]: %s:%u: ", file, line);
+    std::string time = getCurrentTimeWithMs();
+    fprintf(stdout, "[D][%s] ", time.c_str());
     vfprintf(stdout, format, args);
-    fprintf(stdout, "\n");
+    fprintf(stdout, "[%s:%u]\n", file, line);
 }
 
 void CLoggerImpl::LogRun(const char* file, uint32_t line, const char* format, va_list args)
@@ -27,9 +47,10 @@ void CLoggerImpl::LogRun(const char* file, uint32_t line, const char* format, va
         return;
     }
 
-    fprintf(stdout, "[RUN]: %s:%u: ", file, line);
+    std::string time = getCurrentTimeWithMs();
+    fprintf(stdout, "[R][%s] ", time.c_str());
     vfprintf(stdout, format, args);
-    fprintf(stdout, "\n");
+    fprintf(stdout, "[%s:%u]\n", file, line);
 }
 
 void CLoggerImpl::LogInfo(const char* file, uint32_t line, const char* format, va_list args)
@@ -39,9 +60,10 @@ void CLoggerImpl::LogInfo(const char* file, uint32_t line, const char* format, v
         return;
     }
 
-    fprintf(stdout, "[INFO]: %s:%u: ", file, line);
+    std::string time = getCurrentTimeWithMs();
+    fprintf(stdout, "[I][%s] ", time.c_str());
     vfprintf(stdout, format, args);
-    fprintf(stdout, "\n");
+    fprintf(stdout, "[%s:%u]\n", file, line);
 }
 
 void CLoggerImpl::LogWarn(const char* file, uint32_t line, const char* format, va_list args)
@@ -51,9 +73,10 @@ void CLoggerImpl::LogWarn(const char* file, uint32_t line, const char* format, v
         return;
     }
 
-    fprintf(stdout, "[WARN]: %s:%u: ", file, line);
+    std::string time = getCurrentTimeWithMs();
+    fprintf(stdout, "[W][%s] ", time.c_str());
     vfprintf(stdout, format, args);
-    fprintf(stdout, "\n");
+    fprintf(stdout, "[%s:%u]\n", file, line);
 }
 
 void CLoggerImpl::LogError(const char* file, uint32_t line, const char* format, va_list args)
@@ -63,7 +86,8 @@ void CLoggerImpl::LogError(const char* file, uint32_t line, const char* format, 
         return;
     }
 
-    fprintf(stdout, "[ERROR]: %s:%u: ", file, line);
+    std::string time = getCurrentTimeWithMs();
+    fprintf(stdout, "[E][%s] ", time.c_str());
     vfprintf(stdout, format, args);
-    fprintf(stdout, "\n");
+    fprintf(stdout, "[%s:%u]\n", file, line);
 }
